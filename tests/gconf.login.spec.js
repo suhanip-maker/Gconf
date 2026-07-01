@@ -32,7 +32,7 @@ test.describe('Gconf Login Suite', () => {
     expect(page.url()).not.toContain('/login');
   });
 
-  tz;
+
 
   test('3. Login with Google redirect', async ({ page }) => {
     const googleButton = page.locator('button:has-text("Continue with Google"), a:has-text("Continue with Google")').first();
