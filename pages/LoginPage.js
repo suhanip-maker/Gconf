@@ -19,7 +19,19 @@ export class LoginPage {
 
     await emailInput.fill(email);
     await passwordInput.fill(password);
+
+    // Set up listener for the login API response BEFORE clicking
+    // We look for a POST request to a login endpoint
+    const responsePromise = this.page.waitForResponse(response => 
+      response.url().includes('login') && response.request().method() === 'POST',
+      { timeout: 15000 }
+    ).catch(() => null); // Catch timeout in case there's no API call
+
     await loginButton.click();
+
+    // Wait for the API response and return it so tests can assert on it
+    const response = await responsePromise;
+    return response;
   }
 
   async loginWithGoogle() {
@@ -36,9 +48,17 @@ export class LoginPage {
 
   async loginWithPasskey() {
     const passkeyBtn = this.page.locator(LOGIN_SELECTORS.passkeyLoginButton).first();
-    await passkeyBtn.click();
-    // Passkey prompts native OS dialogs, so we just wait a bit for it to trigger
-    await this.page.waitForTimeout(2000);
+    try {
+      await passkeyBtn.click({ timeout: 5000 });
+      await this.page.waitForTimeout(2000);
+    } catch (e) {
+      console.log('--- ERROR: PASSKEY BUTTON NOT FOUND ---');
+      console.log('We searched for: ' + LOGIN_SELECTORS.passkeyLoginButton);
+      const allText = await this.page.locator('body').innerText();
+      const fs = require('fs');
+      fs.writeFileSync('pageText.txt', allText);
+      throw new Error('Passkey button not found. Saved page text to pageText.txt');
+    }
   }
 
   async verifySuccessfulLogin() {
