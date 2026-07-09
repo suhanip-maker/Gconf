@@ -77,12 +77,22 @@ export class EventsPage {
   }
 
   async submitForm(submitTextPattern = /^(Create|Save|Submit|Create Event|Save Changes|Update)$/i) {
-    const saveButton = this.page.locator(EVENT_SELECTORS.submitButton).filter({ hasText: submitTextPattern }).first();
-    if (!(await saveButton.isVisible())) {
-      const fallbackButton = this.page.locator(EVENT_SELECTORS.fallbackSubmitButton).first();
-      await fallbackButton.click({ force: true, timeout: 5000 }).catch(() => console.log('Could not find fallback submit button'));
-    } else {
-      await saveButton.click({ force: true, timeout: 5000 }).catch(() => console.log('Could not click submit button'));
+    let btnToClick = this.page.locator(EVENT_SELECTORS.submitButton).filter({ hasText: submitTextPattern }).first();
+    if (!(await btnToClick.isVisible())) {
+      btnToClick = this.page.locator(EVENT_SELECTORS.fallbackSubmitButton).first();
+    }
+
+    const responsePromise = this.page.waitForResponse(response => 
+      (response.request().method() === 'POST' || response.request().method() === 'PUT' || response.request().method() === 'PATCH') && 
+      response.url().includes('event'),
+      { timeout: 15000 }
+    ).catch(() => null);
+
+    await btnToClick.click({ force: true, timeout: 5000 }).catch(() => console.log('Could not click submit button'));
+
+    const response = await responsePromise;
+    if (response && response.status() !== 200 && response.status() !== 201) {
+      throw new Error(`Event submission API failed with status ${response.status()}`);
     }
   }
 

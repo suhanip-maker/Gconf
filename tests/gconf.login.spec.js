@@ -4,6 +4,9 @@ import { CREDENTIALS } from '../constants/testData';
 
 import { URLS } from '../constants/testData'; // Import URLS for the new assertions
 
+// Reset storage state for this file so tests run unauthenticated
+test.use({ storageState: { cookies: [], origins: [] } });
+
 test('Successfully login with valid credentials (API 200 OK)', async ({ page }) => {
   const loginPage = new LoginPage(page);
 

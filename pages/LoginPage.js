@@ -20,16 +20,13 @@ export class LoginPage {
     await emailInput.fill(email);
     await passwordInput.fill(password);
 
-    // Set up listener for the login API response BEFORE clicking
-    // We look for a POST request to a login endpoint
     const responsePromise = this.page.waitForResponse(response => 
       response.url().includes('login') && response.request().method() === 'POST',
       { timeout: 15000 }
-    ).catch(() => null); // Catch timeout in case there's no API call
+    );
 
     await loginButton.click();
 
-    // Wait for the API response and return it so tests can assert on it
     const response = await responsePromise;
     return response;
   }
